@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Tictactoe</title>
+    <style>
+        body{
+            background-color: aliceblue;
+            color: black;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        button{
+            padding: 1rem;
+            border-radius: 10px;
+            background-color: teal;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        input{
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .form-control{
+            background-color: white;
+            padding: 1em;
+            border-radius: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <!-- <h1>Multiplayer Tictactoe</h1> -->
+    <!-- <button>Start a game</button> -->
+
+
+    <form action="" method="post" class="form-control">
+        {% csrf_token %}
+        <input type="text" name="room_name" placeholder="Enter your name">
+        <button>Start</button>
+    </form>
+</body>
+</html>

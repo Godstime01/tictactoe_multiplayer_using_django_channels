@@ -1,0 +1,9 @@
+home - page when the user can create a game
+waiting - page when the for the other page
+    there's a start button when the creator of the game can start the game
+    the start initiate a web socket connection
+   
+    
+game - page when the other client joins the game
+
+

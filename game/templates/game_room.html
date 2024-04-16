@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Tictactoe</title>
+    <style>
+        body {
+            background-color: aliceblue;
+            color: black;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        button {
+            padding: 1rem;
+            border-radius: 10px;
+            background-color: teal;
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .form-control {
+            background-color: white;
+            padding: 1em;
+            border-radius: 10px;
+        }
+
+        #board_section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: .5rem;
+        }
+
+        .cell {
+            padding: 3rem;
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Invite your Friend to play</h2>
+    <p>{{request.get_host}}/join{{request.path}}</p>
+
+    <div style="display: flex; gap: 1em;">
+        <button>copy link</button>
+        {% if player.is_creator %}
+        <button id="start">Start</button>
+        {% endif %}
+    </div>
+
+    <div>
+
+
+        <h3>Players</h3>
+        <div id="player">
+            {{room.player_set.all|length}}
+        </div>
+    </div>
+
+    <section id="board_section"></section>
+
+    {{ room.name|json_script:'room_name' }}
+    {{ room.player_set.all|length|json_script:'max_participant' }}
+    <script>
+
+        let CURRENT_MOVE = null
+
+        const room = JSON.parse(document.getElementById('room_name').textContent);
+        const max_participant = JSON.parse(document.getElementById('max_participant').textContent) // return boolean if the room is filled
+        var cells;
+
+        const player = document.querySelector('#player')
+        const startButton = document.querySelector('#start')
+
+        // console.log(window.location.search, room)
+        const username = window.location.search.split('=')[1]
+
+        const socket = new WebSocket(
+            `ws://${window.location.host}/ws/play/${room}?player_name=${username}`
+        )
+
+        function make_move(cell) {
+
+            socket.send(JSON.stringify({
+                'type': 'make_move',
+                'message': cell
+            }))
+        }
+
+        function start() {
+            // will append the game board to both player's screen
+
+            // get board section
+            const getBoardSection = document.getElementById('board_section'); // Replace 'your-board-section-id' with the actual ID of your board section
+
+           
+            // Generate buttons with unique numbers
+            const cellNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+            const buttonsHTML = cellNumbers.map(number => `<button class='cell' data-number='${number}'>${number}</button>`).join('');
+
+            getBoardSection.innerHTML = buttonsHTML;
+
+            cells = document.querySelectorAll('.cell');
+
+            if (cells) {
+                console.log(cells)
+                cells.forEach(cell => {
+                    cell.addEventListener('click', e => {
+                        console.log(e.currentTarget.dataset.number);
+                        make_move(e.currentTarget.dataset.number); // Assuming make_move function takes the cell number as argument
+                    });
+                });
+            }
+        }
+
+        function deactivate_button(player){
+            if (player.is_turn == false) {
+                console.log('reached here')
+                cells.forEach(cell => {
+                    cell.disabled = true // disable all button
+                });
+            }
+        }
+
+        socket.onopen = function (e) {
+            console.log("Successfully connected to the WebSocket.");
+            // send join message
+            const message = {
+                'type': 'player_joined',
+                'message': username
+            }
+            socket.send(JSON.stringify(message))
+        }
+
+        socket.onmessage = function (e) {
+            // Parse the incoming message as JSON
+            const message = JSON.parse(e.data);
+
+            switch (message.type) {
+                case 'join':
+                    // Append the new paragraph to the player node
+                    player.innerHTML = `<p>${message.message}</p>`;
+                    break;
+                case 'start':
+                    console.log(message.message);
+                    start()
+                    break
+                case 'make_move':
+                    console.log(message.message);
+                    CURRENT_MOVE = message.message
+
+                    // find the position of the place
+                    console.log(message.move)
+                    pos = cells[message.move - 1]
+                    pos.innerHTML = CURRENT_MOVE
+                    console.log(message.is_turn)
+                    deactivate_button(message.is_turn)
+                    break
+            }
+        };
+
+
+        if (startButton) {
+            // send start event
+            startButton.addEventListener('click', e => {
+
+                console.log('start game')
+                socket.send(JSON.stringify({
+                    'type': 'start',
+                    'message': ''
+                }))
+
+            })
+        }
+
+    </script>
+</body>
+
+</html>
